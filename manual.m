@@ -14,7 +14,6 @@ StimulusCode=double(StimulusCode);
 StimulusType=double(StimulusType);
 
 
-% % FIR Filtering
 [b,a]=butter(5,[.01 16]/(120),'bandpass');
 Signal=filter(b,a,Signal);
 
@@ -220,8 +219,8 @@ for k = 41 : 85
 end
 
 for tepoch = 1 : size(channel,2) 
-% trainTarg = zeros(1200,160);
-% trainNonTarg = zeros(6000,160);
+trainTarg = zeros(1200,160);
+trainNonTarg = zeros(6000,160);
 indTarg = 1;
 indNonTarg = 1;
 for i = 1 : trialSize
@@ -298,8 +297,6 @@ for i = 0 : (testSize - 1)
             end
         end
     end
-end
-    
 end
 
 acc = 0;
@@ -441,9 +438,9 @@ for i = 1 : 7
     sigNonP3Avrg = sigNonP3Avrg +  tmp(1,1:160,i) + tmp(1,161:320,i) + tmp(1,321:480,i) + tmp(1,481:640,i) + tmp(1,641:800,i) + tmp(1,801:960,i) + tmp(1,961:1120,i) + tmp(1,1121:1280,i) + tmp(1,1281:1440,i) + tmp(1,1441:1600,i);
 end
 sigNonP3Avrg = sigNonP3Avrg / 70;
-% sigNonP3Avrg = mean(sigNonP3);
-% sigTrain = [sigP3, sigNonP3];
-% 
+sigNonP3Avrg = mean(sigNonP3);
+sigTrain = [sigP3, sigNonP3];
+
 %% Downsampling Train and Test Data
 sigP3DS = zeros(60,32,7);
 sigNonP3DS = zeros(60,160,7);
@@ -512,13 +509,9 @@ for l = 1 : 7
         end
     end
 end
-% [la, lala] = sort(AMPAvrg(10,:,2),'descend');
-% lala
-% la
 
             
-%% %%%%%%%%%%%%%%%%%%% Features %%%%%%%%%%%%%%%%%%%%%%
-%Latency & Amplitude & Area & Peak to Peak
+%% Latency & Amplitude & Area & Peak to Peak
 LAT = zeros (85,180,7);
 AMP = zeros (85,180,7);
 LAR = zeros (85,180,7);
@@ -626,7 +619,6 @@ for i = 1 : 85
     end
 end
 scr6
-%%%%%%%%%%%%%%%%%%%%%P300 & Non-P300 Epochs Seperation%%%%%%%%%%%%%%%%%%%%%%%%
 %--------------------SIGNAL----------------------%
 sigNP = zeros(85,24000,7);
 sigP = zeros(85,4800,7);
@@ -719,8 +711,8 @@ for i = 1 : size(sigTrain,1)
     end
 end
 
-% featureTrain = [LAT1 LAT2;AMP1 AMP2;LAR1 LAR2;AAMP1 AAMP2;ALAR1 ALAR2;PAR1 PAR2;NAR1 NAR2;PP1 PP2;PPT1 PPT2;PPS1 PPS2;N1P1 N1P2;N1PL1 N1PL2;P3N41 P3N42;P3N11 P3N12];
-% group = [ones(1,30) -ones(1,150)];
+featureTrain = [LAT1 LAT2;AMP1 AMP2;LAR1 LAR2;AAMP1 AAMP2;ALAR1 ALAR2;PAR1 PAR2;NAR1 NAR2;PP1 PP2;PPT1 PPT2;PPS1 PPS2;N1P1 N1P2;N1PL1 N1PL2;P3N41 P3N42;P3N11 P3N12];
+group = [ones(1,30) -ones(1,150)];
 featureTrain = zeros(360,7);
 featureTrain(1:30,:) = LAR1(10,:,:);
 featureTrain(31:60,:) = N1P1(10,:,:);
@@ -759,7 +751,6 @@ for i = 1 : size(sigTest,3)
     end
 end
 
-%%%%%%%%%%%%%%%%%%%%% Features %%%%%%%%%%%%%%%%%%%%%%
 %Latency & Amplitude & Area & Peak to Peak
 LATtest = zeros (100,180,7);
 AMPtest = zeros (100,180,7);
@@ -809,7 +800,7 @@ for i = 1 : size(sigTest,3)
     end
 end
 
-%featureTest = [LATtest; AMPtest; LARtest; AAMPtest; ALARtest; PARtest; NARtest; PPtest; PPTtest; PPStest; N1Ptest; N1PLtest; P3N4test; P3N1test];
+featureTest = [LATtest; AMPtest; LARtest; AAMPtest; ALARtest; PARtest; NARtest; PPtest; PPTtest; PPStest; N1Ptest; N1PLtest; P3N4test; P3N1test];
 featureTest = zeros(1080,7);
 featureTest(1:180,:) = LARtest(10,:,:);
 featureTest(181:360,:) = N1Ptest(10,:,:);
@@ -876,8 +867,7 @@ for i = 1 : 180
     end
 end
 ll
-% %%%%%%%%%%%%%%%%%%%%%%%%% Character Guessing %%%%%%%%%%%%%%%%%%%%%%
-% 
+
 stmCode = zeros (100, 180);
 for i = 1 : 100
     for j = 0 : 179

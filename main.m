@@ -19,11 +19,10 @@ StimulusType=double(StimulusType);
 
 sig = zeros(85,12,15,window,64);
 
-% % FIR Filtering
 [b,a]=butter(5,[.01 16]/(120),'bandpass');
 Signal=filter(b,a,Signal);
 
-Outlier Removing
+% Outlier Removing
 for i = 1 : size(Signal,3)
     for j = 1 : size(Signal,1)
         m = mean( Signal(j,:,i) );
@@ -73,7 +72,7 @@ for epoch=1:size(Signal,1)
     for row=7:12
         for col=1:6
             letter(epoch,m,:,:)=(avgresp(row,:,:)+avgresp(col,:,:))/2;
-            row-column intersection
+            %row-column intersection
             letter(m,:,:)=(avgresp(row,:,:)+avgresp(col,:,:))/2;
             the crude avg peak classifier score (**tuned for Subject_A**)
             score(m)=mean(letter(m,30:100,channel(1)))-mean(letter(m,110:150,channel(1)));
@@ -221,12 +220,13 @@ letr = [1 2 3 4 5 6;
         25 26 27 28 29 30;
         31 32 33 34 35 36];
     acc = 0;
-% for k = 41 : 85
-%         rowColScr = zeros(12,1);
+for k = 41 : 85
+    rowColScr = zeros(12,1);
+end
 
 for tepoch = 1 : size(channel,2) 
-% trainTarg = zeros(1200,160);
-% trainNonTarg = zeros(6000,160);
+trainTarg = zeros(1200,160);
+trainNonTarg = zeros(6000,160);
 indTarg = 1;
 indNonTarg = 1;
 for i = 1 : 45
@@ -248,7 +248,7 @@ trainNonTarg = tmp';
 train = [trainTarg; trainNonTarg];
 label = [ones(size(trainTarg,1),1); -ones(size(trainNonTarg,1),1)];
 W = LDATrain(trainTarg,trainNonTarg);
-% W = fitcsvm(train,label);
+W = fitcsvm(train,label);
 vote = zeros(40,12);
 for i = 46 : 85
     for j = 1 : 12
@@ -258,13 +258,13 @@ for i = 46 : 85
         tmp = downsample(testData',8);
         testData = tmp';
         vote(i-45,j) = LDATest(W,testData);
-        %         [a,b] = predict(W, testData);
-        %         c = mean(b);
-        %         if c(1) > c(2)
-        %             vote(i-45,j) = 1;
-        %         else
-        %             vote(i-45,j) = -1;
-        %         end
+        [a,b] = predict(W, testData);
+        c = mean(b);
+        if c(1) > c(2)
+            vote(i-45,j) = 1;
+        else
+            vote(i-45,j) = -1;
+        end
     end
 end
 for k = 1 : 40
@@ -280,7 +280,6 @@ end
 fprintf(1, '\nAccuracy = %d\n\n' ,(acc/testSize)*100);
 
 
-%---------- comment out the rest when running ----------------%
 trainData = [trainTarg; trainNonTarg];
 group = [ones(1,size(trainTarg,1)), zeros(1,size(trainNonTarg,1))];
 indTest = 1;
@@ -299,8 +298,8 @@ for i = 1 : 15
 end
 tmp = downsample(testData',8);
 testData = tmp';
-svmStruct = svmtrain(trainData, group);
-class1 = svmclassify(svmStruct, testData);
+svmStruct = fitcsvm(trainData, group);
+class1 = ClassificationSVM(svmStruct, testData);
 W = LDA (trainData, group);
 class1 = testData * W';
 class1 = classify (testData, trainData, group);
@@ -325,7 +324,7 @@ for i = 1 : testSize
 
 end
 
-display results
+% display results
 
 if isempty(TargetChar)==0
 
@@ -356,7 +355,7 @@ if isempty(TargetChar)==0
     xlabel('time (s) after stimulus')
     ylabel('amplitude (uV)')
     
-    Target/NonTarget voltage topography plot at 300ms (sample 72)
+    %Target/NonTarget voltage topography plot at 300ms (sample 72)
     vdiff=abs(Tavg(72,:)-NTavg(72,:));
     figure
     topoplotEEG(vdiff,'eloc64.txt','gridscale',150)
@@ -377,7 +376,7 @@ fprintf(1, 'This is an example of how the results *must* be formatted for submis
 fprintf(1, 'The character vectors from each case and subject are to be labeled, grouped, and submitted according to the accompanied documentation. \n');
 
 
-convert to double precision
+%convert to double precision
 Signal=double(Signal);
 Flashing=double(Flashing);
 StimulusCode=double(StimulusCode);
@@ -387,7 +386,7 @@ StimulusType=double(StimulusType);
 
 
 
-Data Manipulation
+%Data Manipulation
 chList = [9 11 13 34 51 56 60];
 stmType = zeros(85,180);
 tmp = Signal(:,:,chList);
@@ -461,7 +460,7 @@ sigNonP3Avrg = sigNonP3Avrg / 70;
 sigNonP3Avrg = mean(sigNonP3);
 sigTrain = [sigP3, sigNonP3];
 
-Downsampling Train and Test Data
+%Downsampling Train and Test Data
 sigP3DS = zeros(60,32,7);
 sigNonP3DS = zeros(60,160,7);
 featureTrain1 = zeros (120,160);
@@ -497,8 +496,8 @@ for i = 1 : 25
         featureTrain2(i,j+1) = (sum(abs(sigTestDS(i,(16*j+5) : (16*j + 10),2))))/6;
     end
 end
-svmStruct = svmtrain(featureTrain1, group1);
-class1 = svmclassify(svmStruct, featureTest1);
+svmStruct = fitsvm(featureTrain1, group1);
+class1 = ClassificationSVM(svmStruct, featureTest1);
 
 sigTrainDS = zeros(60,192,7);
 for i = 1 : 25
@@ -512,8 +511,8 @@ trainData(1:32,:) = sigP3AvrgDS(1,:,:);
 trainData(33:192,:) = sigNonP3AvrgDS(1,:,:);
 testData(:,:) = sigTestDS(10,:,:);
 group = [ones(1,32), -ones(1,160)];
-svmStruct = svmtrain(trainData, group);
-class = svmclassify(svmStruct, testData);
+svmStruct = fitsvm(trainData, group);
+class = ClassificationSVM(svmStruct, testData);
 javab = zeros(1,12);
 for i = 1 : 12
     javab(i) = sum(class(16*(i-1)+1:16*i));
@@ -533,9 +532,7 @@ end
 lala
 la
 
-            
-%%%%%%%%%%%%%%%%% Features %%%%%%%%%%%%%%%%%%%%%%
-Latency & Amplitude & Area & Peak to Peak
+%Latency & Amplitude & Area & Peak to Peak
 LAT = zeros (85,180,7);
 AMP = zeros (85,180,7);
 LAR = zeros (85,180,7);
@@ -643,7 +640,6 @@ for i = 1 : 85
     end
 end
 scr6
-%%%%%%%%%%%%%%%%%%P300 & Non-P300 Epochs Seperation%%%%%%%%%%%%%%%%%%%%%%%%
 %--------------------SIGNAL----------------------%
 sigNP = zeros(85,24000,7);
 sigP = zeros(85,4800,7);
@@ -776,8 +772,7 @@ for i = 1 : size(sigTest,3)
     end
 end
 
-%%%%%%%%%%%%%%%%%% Features %%%%%%%%%%%%%%%%%%%%%%
-Latency & Amplitude & Area & Peak to Peak
+%Latency & Amplitude & Area & Peak to Peak
 LATtest = zeros (100,180,7);
 AMPtest = zeros (100,180,7);
 LARtest = zeros (100,180,7);
@@ -893,7 +888,6 @@ for i = 1 : 180
     end
 end
 ll
-%%%%%%%%%%%%%%%%%%%%%%% Character Guessing %%%%%%%%%%%%%%%%%%%%%%
 
 stmCode = zeros (100, 180);
 for i = 1 : 100
@@ -912,7 +906,7 @@ end
 srtScr
 indx
 
-Train: 60 epochs // Test: 25 epochs
+%Train: 60 epochs // Test: 25 epochs
 LAT1train = LAT1 (1:60,:,:);
 LAT1test = LAT1 (61:85,:,:);
 LAT2train = LAT2 (1:60,:,:);
@@ -970,8 +964,8 @@ P3N11test = P3N11 (61:85,:,:);
 P3N12train = P3N12 (1:60,:,:);
 P3N12test = P3N12 (61:85,:,:);
 
-Feature1 : Serial Features of P300
-Feature2 : Serial Features of Non-P300
+%Feature1 : Serial Features of P300
+%Feature2 : Serial Features of Non-P300
 
 feature1Train = [LAT1train AMP1train LAR1train AAMP1train ALAR1train PAR1train NAR1train PP1train PPT1train PPS1train N1P1train N1PL1train P3N41train P3N11train];
 feature1Test = [LAT1test AMP1test LAR1test AAMP1test ALAR1test PAR1test NAR1test PP1test PPT1test PPS1test N1P1test N1PL1test P3N41test P3N11test];
@@ -1106,7 +1100,7 @@ else
     end
 end
 
-predictedChar = matrix(row, col-6)
+predictedChar = matrix(row, col-6);
 TargetChar(m)
 sigFiltered = decimate(sigFiltered, 24);
 s = Signal(2,:,11);

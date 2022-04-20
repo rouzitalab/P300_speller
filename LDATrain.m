@@ -13,10 +13,5 @@ Sigma2 = cov(Class2);
 Sigma = (N1/N)*Sigma1 + (N2/N)*Sigma2;
 
 W = Sigma\(u1-u2)';
-% size(u1)
-% size(u2)
-% size(Sigma1)
-% size(Sigma2)
-% size(Sigma)
 
 end
